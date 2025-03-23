@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interactive 3D Shape with Color and Size Control</title>
+    <style>
+        body { margin: 0; }
+        canvas { width: 100%; height: 100%; }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #colorSelect, #shapeSelect {
+            width: 150px;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        #sizeSlider {
+            width: 150px;
+            margin: 10px 0;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <select id="colorSelect" onchange="changeColor(this.value)">
+            <option value="0xff0000" style="background-color: #ff0000">Red</option>
+            <option value="0x00ff00" style="background-color: #00ff00" selected>Green</option>
+            <option value="0x0000ff" style="background-color: #0000ff">Blue</option>
+            <option value="0xffff00" style="background-color: #ffff00">Yellow</option>
+            <option value="0xff00ff" style="background-color: #ff00ff">Magenta</option>
+            <option value="0x00ffff" style="background-color: #00ffff">Cyan</option>
+            <option value="0xff8000" style="background-color: #ff8000">Orange</option>
+            <option value="0x800080" style="background-color: #800080">Purple</option>
+            <option value="0x008080" style="background-color: #008080">Teal</option>
+            <option value="0xffa500" style="background-color: #ffa500">Bright Orange</option>
+            <option value="0xff69b4" style="background-color: #ff69b4">Hot Pink</option>
+            <option value="0x4b0082" style="background-color: #4b0082">Indigo</option>
+            <option value="0x00ff7f" style="background-color: #00ff7f">Spring Green</option>
+            <option value="0xffd700" style="background-color: #ffd700">Gold</option>
+            <option value="0x4682b4" style="background-color: #4682b4">Steel Blue</option>
+        </select>
+        <input type="range" id="sizeSlider" min="0.5" max="5" step="0.1" value="1">
+        <select id="shapeSelect" onchange="changeShape(this.value)">
+            <option value="cube" selected>Cube</option>
+            <option value="sphere">Sphere</option>
+            <option value="cylinder">Cylinder</option>
+            <option value="cone">Cone</option>
+            <option value="tetrahedron">Tetrahedron</option>
+            <option value="octahedron">Octahedron</option>
+            <option value="dodecahedron">Dodecahedron</option>
+            <option value="icosahedron">Icosahedron</option>
+            <option value="torus">Torus</option>
+            <option value="torusKnot">Torus Knot</option>
+            <option value="ring">Ring</option>
+            <option value="prism">Triangular Prism</option>
+            <option value="lathe">Lathe Shape</option>
+            <option value="polyhedron">Custom Polyhedron</option>
+        </select>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Initial cube setup
+        let currentGeometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        let shape = new THREE.Mesh(currentGeometry, material);
+        
+        // Add white edges
+        let edges = new THREE.EdgesGeometry(currentGeometry);
+        const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+        let edgeLines = new THREE.LineSegments(edges, edgeMaterial);
+        shape.add(edgeLines);
+        
+        scene.add(shape);
+        camera.position.z = 5;
+
+        // Mouse tracking variables
+        let mouseX = 0;
+        let mouseY = 0;
+        let prevMouseX = 0;
+        let prevMouseY = 0;
+        let rotationSpeedX = 0;
+        let rotationSpeedY = 0;
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        // Mouse move handler
+        document.addEventListener('mousemove', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObject(shape);
+
+            if (intersects.length > 0) {
+                const deltaX = mouseX - prevMouseX;
+                const deltaY = mouseY - prevMouseY;
+                rotationSpeedX = deltaY * 0.005;
+                rotationSpeedY = deltaX * 0.005;
+            }
+
+            prevMouseX = mouseX;
+            prevMouseY = mouseY;
+        });
+
+        // Color change function
+        function changeColor(newColor) {
+            material.color.setHex(parseInt(newColor));
+        }
+
+        // Size slider handler
+        const sizeSlider = document.getElementById('sizeSlider');
+        sizeSlider.addEventListener('input', (event) => {
+            const scale = parseFloat(event.target.value);
+            shape.scale.set(scale, scale, scale);
+        });
+
+        // Shape change function
+        function changeShape(type) {
+            scene.remove(shape);
+            let newGeometry;
+            
+            switch(type) {
+                case 'cube':
+                    newGeometry = new THREE.BoxGeometry(1, 1, 1);
+                    break;
+                case 'sphere':
+                    newGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+                    break;
+                case 'cylinder':
+                    newGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
+                    break;
+                case 'cone':
+                    newGeometry = new THREE.ConeGeometry(0.5, 1, 32);
+                    break;
+                case 'tetrahedron':
+                    newGeometry = new THREE.TetrahedronGeometry(0.7);
+                    break;
+                case 'octahedron':
+                    newGeometry = new THREE.OctahedronGeometry(0.7);
+                    break;
+                case 'dodecahedron':
+                    newGeometry = new THREE.DodecahedronGeometry(0.7);
+                    break;
+                case 'icosahedron':
+                    newGeometry = new THREE.IcosahedronGeometry(0.7);
+                    break;
+                case 'torus':
+                    newGeometry = new THREE.TorusGeometry(0.4, 0.2, 16, 100);
+                    break;
+                case 'torusKnot':
+                    newGeometry = new THREE.TorusKnotGeometry(0.4, 0.15, 100, 16);
+                    break;
+                case 'ring':
+                    newGeometry = new THREE.RingGeometry(0.3, 0.5, 32);
+                    break;
+                case 'prism':
+                    newGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 3);
+                    break;
+                case 'lathe':
+                    const points = [];
+                    for (let i = 0; i < 10; i++) {
+                        points.push(new THREE.Vector2(Math.sin(i * 0.2) * 0.3 + 0.2, (i - 5) * 0.1));
+                    }
+                    newGeometry = new THREE.LatheGeometry(points, 32);
+                    break;
+                case 'polyhedron':
+                    const vertices = [
+                        1, 1, 1,  -1, -1, 1,  -1, 1, -1,  1, -1, -1,
+                        1, -1, 1,  -1, 1, 1,  1, 1, -1,  -1, -1, -1
+                    ];
+                    const indices = [
+                        0, 1, 2,  0, 2, 3,  0, 3, 4,  0, 4, 1,
+                        5, 2, 1,  5, 1, 4,  5, 4, 3,  5, 3, 2
+                    ];
+                    newGeometry = new THREE.PolyhedronGeometry(vertices, indices, 0.7, 0);
+                    break;
+            }
+            
+            shape = new THREE.Mesh(newGeometry, material);
+            edges = new THREE.EdgesGeometry(newGeometry);
+            edgeLines = new THREE.LineSegments(edges, edgeMaterial);
+            shape.add(edgeLines);
+            scene.add(shape);
+            
+            // Apply current scale
+            const currentScale = parseFloat(sizeSlider.value);
+            shape.scale.set(currentScale, currentScale, currentScale);
+        }
+
+        // Animation function
+        function animate() {
+            requestAnimationFrame(animate);
+            shape.rotation.x += rotationSpeedX;
+            shape.rotation.y += rotationSpeedY;
+            rotationSpeedX *= 0.95;
+            rotationSpeedY *= 0.95;
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Window resize handler
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+    </script>
+</body>
+</html>
