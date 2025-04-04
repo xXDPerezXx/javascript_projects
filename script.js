@@ -8,6 +8,8 @@ const scoreDisplay = document.getElementById('score');
 const levelDisplay = document.getElementById('level');
 const linesDisplay = document.getElementById('lines');
 
+const bricklanding = document.getElementById('bricklanding')
+
 const grid = [];
 const gridSize = 20; // Size of each grid cell in pixels
 const gridWidth = canvas.width / gridSize;
@@ -212,6 +214,8 @@ function freezePiece() {
         });
     });
 
+    bricklanding.currentTime = 0;
+    bricklanding.play();
     checkRows();
     createPiece();
 }
