@@ -8,7 +8,8 @@ const scoreDisplay = document.getElementById('score');
 const levelDisplay = document.getElementById('level');
 const linesDisplay = document.getElementById('lines');
 
-const bricklanding = document.getElementById('bricklanding')
+const bricklanding = document.getElementById('bricklanding');
+const rotateSound = document.getElementById("rotateSound");
 
 const grid = [];
 const gridSize = 20; // Size of each grid cell in pixels
@@ -271,6 +272,8 @@ function rotatePiece() {
     const originalShape = currentPiece.shape;
     const rotatedShape = originalShape[0].map((val, index) => originalShape.map(row => row[index]).reverse());
 
+    rotateSound.currentTime = 0;
+    rotateSound.play();
     currentPiece.shape = rotatedShape;
     if (checkCollision()) {
         currentPiece.shape = originalShape; // Revert rotation if collision
