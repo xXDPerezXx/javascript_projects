@@ -1,5 +1,16 @@
 // script.js
 
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let brickLandingBuffer;
+
+fetch('brick_landing.mp3')
+    .then(response => response.arrayBuffer())
+    .then(buffer => audioContext.decodeAudioData(buffer))
+    .then(decodedBuffer => {
+        brickLandingBuffer = decodedBuffer;
+    })
+    .catch(error => console.error('Error loading sound:', error));
+
 const canvas = document.getElementById('game-board');
 const context = canvas.getContext('2d');
 const nextCanvas = document.getElementById('next-piece');
@@ -8,7 +19,7 @@ const scoreDisplay = document.getElementById('score');
 const levelDisplay = document.getElementById('level');
 const linesDisplay = document.getElementById('lines');
 
-const bricklanding = document.getElementById('bricklanding');
+// const bricklanding = document.getElementById('bricklanding');
 const rotateSound = document.getElementById("rotateSound");
 
 const grid = [];
@@ -215,8 +226,16 @@ function freezePiece() {
         });
     });
 
-    bricklanding.currentTime = 0;
-    bricklanding.play();
+    // bricklanding.currentTime = 0;
+    // bricklanding.play();
+
+    if (brickLandingBuffer) {
+        const source = audioContext.createBufferSource();
+        source.buffer = brickLandingBuffer;
+        source.connect(audioContext.destination);
+        source.start(0);
+    }
+
     checkRows();
     createPiece();
 }
