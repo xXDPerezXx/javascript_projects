@@ -1,15 +1,6 @@
 // script.js
 
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-let brickLandingBuffer;
-
-fetch('brick_landing.mp3')
-    .then(response => response.arrayBuffer())
-    .then(buffer => audioContext.decodeAudioData(buffer))
-    .then(decodedBuffer => {
-        brickLandingBuffer = decodedBuffer;
-    })
-    .catch(error => console.error('Error loading sound:', error));
+let isDownArrowPressed = false;
 
 const canvas = document.getElementById('game-board');
 const context = canvas.getContext('2d');
@@ -19,8 +10,9 @@ const scoreDisplay = document.getElementById('score');
 const levelDisplay = document.getElementById('level');
 const linesDisplay = document.getElementById('lines');
 
-// const bricklanding = document.getElementById('bricklanding');
+const bricklanding = document.getElementById('bricklanding');
 const rotateSound = document.getElementById("rotateSound");
+const bricksEliminatedSound = document.getElementById('bricksEliminatedSound');
 
 const grid = [];
 const gridSize = 20; // Size of each grid cell in pixels
@@ -214,6 +206,7 @@ function checkCollision() {
 }
 
 function freezePiece() {
+
     const shape = currentPiece.shape;
     const x = currentPiece.x;
     const y = currentPiece.y;
@@ -226,14 +219,11 @@ function freezePiece() {
         });
     });
 
-    // bricklanding.currentTime = 0;
-    // bricklanding.play();
+    // console.log('isDownArrrowPressed in freezePiece:', isDownArrowPressed);
 
-    if (brickLandingBuffer) {
-        const source = audioContext.createBufferSource();
-        source.buffer = brickLandingBuffer;
-        source.connect(audioContext.destination);
-        source.start(0);
+    if (bricklanding){
+        bricklanding.currentTime = 0;
+        bricklanding.play();
     }
 
     checkRows();
@@ -241,11 +231,18 @@ function freezePiece() {
 }
 
 function checkRows() {
+    let rowsCleared = 0; // new code
     for (let y = gridHeight - 1; y >= 0; y--) {
         if (grid[y].every(value => value)) {
             clearRow(y);
             y++; // Check the same row again after shifting down
+            rowsCleared++; // new code
         }
+    }
+
+    if (rowsCleared > 0 && bricksEliminatedSound) {
+        bricksEliminatedSound.currentTime = 0;
+        bricksEliminatedSound.play();
     }
 }
 
@@ -272,9 +269,17 @@ document.addEventListener('keydown', event => {
     } else if (event.key === 'ArrowRight') {
         movePieceHorizontal(1);
     } else if (event.key === 'ArrowDown') {
+        isDownArrowPressed = true; // new code
         movePieceDown();
     } else if (event.key === 'ArrowUp') {
         rotatePiece();
+    }
+});
+
+// new script
+document.addEventListener('keyup', event => {
+    if (event.key === 'ArrowDown') {
+        isDownArrowPressed =false;
     }
 });
 
